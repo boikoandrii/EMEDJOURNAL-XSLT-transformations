@@ -1,0 +1,509 @@
+  <?xml version="1.0" encoding="UTF-8"?>
+<xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
+    xmlns:xs="http://www.w3.org/2001/XMLSchema"
+    xmlns:myFunc="http://www.myFunc.com/myFunc"
+    exclude-result-prefixes="xs"
+    version="2.0">
+    <xsl:output method="xml" encoding="UTF-8"></xsl:output>
+    <!-- <xsl:strip-space elements="*"/> -->
+    <xsl:variable name="preambule">
+        \documentclass[5p]{elsarticle}
+        \makeatletter
+        \def\ps@pprintTitle{\let\@oddhead\@empty\let\@evenhead\@empty\def\@oddfoot{\reset@font\hfil\thepage\hfil}\let\@evenfoot\@oddfoot}
+        \makeatother
+        \usepackage{tablefootnote}
+        \usepackage{graphicx}
+        \usepackage{multirow}
+        \usepackage{wrapfig,lipsum}
+        \usepackage{array}
+        \usepackage{booktabs,siunitx}
+        \usepackage{mathtext}
+        \usepackage[T2A]{fontenc}
+        \usepackage[utf8]{inputenc}
+        \usepackage[ukrainian]{babel}
+        \usepackage{lineno,hyperref}
+        \biboptions{longnamesfirst,angle,semicolon}
+        \modulolinenumbers[5]
+        \usepackage{fancyhdr}
+        \pagestyle{fancy}
+        \fancyhead{}
+        \fancyfoot[C]{\thepage}
+        \fancyhead[C]{Psychosomatic Medicine and General Practice $\bullet$ Oct 2016 $\bullet$ Vol.1(1) $\bullet$ e010111}
+        \fancyfoot[RO,LE]{}
+        \tolerance=10000
+        \usepackage{numcompress}
+        \bibliographystyle{model6-num-names}
+    </xsl:variable>
+    <xsl:variable name="references">
+        <cmd name="section*" gr="0" nl1="1"></cmd>
+        <group>
+            <xsl:text>References</xsl:text>
+        </group>
+        <cmd name="bibliography" nl1="1">
+            <parm>
+                <xsl:text>testArticleTexml</xsl:text>
+            </parm>
+        </cmd>
+    </xsl:variable>
+    <xsl:variable name="bibtexVar">
+        % Encoding: UTF-8
+    </xsl:variable>
+    
+    <xsl:template name="frontmatter" match="article/front">
+        <env name="frontmatter">
+            <cmd name="title" nl1="1">
+                <parm>
+                    <cmd name="smash" nl1="1">
+                        <parm>
+                            <cmd name="includegraphics">
+                                <opt>scale=0.15</opt>
+                                <parm>logo</parm>
+                            </cmd>
+                        </parm>
+                    </cmd>
+                    <ctrl ch="\"/>
+                    <xsl:text>[-1.5cm]</xsl:text>
+                    <cmd name="textsc" nl1="1">
+                        <parm>
+                            <cmd name="bfseries" gr="0"></cmd>
+                            <xsl:text> </xsl:text>
+                            <xsl:value-of select="journal-meta/journal-title-group/journal-title"/>
+                        </parm>
+                    </cmd>
+                    <ctrl ch="\"/>
+                    <group>
+                        <cmd name="small" nl1="1">
+                            <parm>Vol.1(1):e010111</parm>
+                        </cmd>
+                        <ctrl ch="\"/>
+                        <xsl:text>[1.5cm]</xsl:text>
+                    </group>
+                    <group nl1="1">
+                        <cmd name="LARGE" gr="0" nl1="1"></cmd>
+                        <cmd name="bfseries" gr="0"></cmd>
+                        <xsl:value-of select="article-meta/title-group/article-title"/>
+                    </group>
+                </parm>
+            </cmd>
+            <xsl:apply-templates/>
+        </env>
+    </xsl:template>
+    <xsl:template match="journal-meta"/>
+    <xsl:template match="article-meta/article-categories"/>
+    <xsl:template match="article-meta/title-group"/>
+    <xsl:template match="article-meta/contrib-group/contrib">
+        <cmd name="author" nl1="1">
+            <opt>
+                <xsl:for-each select="xref">
+                    <xsl:value-of select="@rid"/><xsl:if test="position()!=last()">,</xsl:if>
+                </xsl:for-each>
+            </opt>
+            <parm>
+                <xsl:value-of select="name/surname"/><xsl:text> </xsl:text><xsl:value-of select="name/given-names"/>
+            </parm>
+        </cmd>
+    </xsl:template>
+    <xsl:template match="article-meta/contrib-group/aff">
+        <cmd name="address" nl1="1">
+            <opt>
+                <xsl:value-of select="@id"/>
+            </opt>
+            <parm>
+                <xsl:value-of select="institution"/><xsl:text>, </xsl:text><xsl:value-of select="addr-line/named-content"/><xsl:text>, </xsl:text><xsl:value-of select="country"/>
+            </parm>
+        </cmd>
+    </xsl:template>
+    <xsl:template match="article-meta/abstract">
+        <env name="abstract" nl1="1">
+            <xsl:apply-templates/>
+        </env>
+    </xsl:template>
+    <xsl:template match="article-meta/kwd-group">
+        <env name="keyword">
+            <cmd name="texttt" nl1="1">
+                <parm>
+                    <xsl:for-each select="kwd">
+                        <xsl:value-of select="."/>
+                        <xsl:if test="position()!=last()">
+                            <xsl:text>, </xsl:text>
+                        </xsl:if>
+                    </xsl:for-each>
+                </parm>
+            </cmd>
+        </env>
+    </xsl:template>
+    <xsl:template match="article-meta/pub-date"/>
+    
+    <xsl:template name="article-body" match="article/body">
+        <xsl:apply-templates/>
+    </xsl:template>
+    <xsl:template match="sec">
+        <xsl:choose>
+            <xsl:when test="parent::sec">
+                <cmd name="subsection" gr="0" nl1="1"></cmd>
+                <xsl:apply-templates/>
+            </xsl:when>
+            <xsl:otherwise>
+                <cmd name="section" gr="0" nl1="1"></cmd>
+                <xsl:apply-templates/>
+            </xsl:otherwise>
+        </xsl:choose>
+    </xsl:template>
+    <xsl:template match="title">
+        <xsl:choose>
+            <xsl:when test="parent::sec">
+                <group>
+                    <xsl:value-of select="."/>
+                </group>
+            </xsl:when>
+            <xsl:otherwise/>
+        </xsl:choose>
+    </xsl:template>
+    <xsl:template match="p">
+        <xsl:choose>
+            <xsl:when test="parent::abstract">
+                <cmd name="paragraph" gr="0" nl1="1"></cmd>
+                <group>
+                    <cmd name="textbf" nl1="1">
+                        <parm>
+                            <xsl:value-of select="bold"/>
+                        </parm>
+                    </cmd>
+                </group>
+                <xsl:copy-of select="./node()[not(self::bold)]"/>
+            </xsl:when>
+            <xsl:when test="parent::sec">
+                <cmd name="par" gr="0" nl1="1"></cmd>
+                <xsl:apply-templates/>
+            </xsl:when>
+            <xsl:otherwise/>
+        </xsl:choose>
+    </xsl:template>
+    <xsl:template match="xref">
+        <cmd name="cite">
+            <parm>
+                <xsl:value-of select="@rid"/>
+            </parm>
+        </cmd>
+    </xsl:template>
+    <xsl:template match="table-wrap">
+        <env name="table*" nl1="1">
+            <opt>
+                <xsl:text>t</xsl:text>
+            </opt>
+            <cmd name="centering" gr="0" nl1="1"/>
+            <env name="threeparttable" nl1="1">
+                <cmd name="caption" nl1="1">
+                    <parm>
+                        <xsl:value-of select="caption/title"/>
+                    </parm>
+                </cmd>
+                <ctrl ch="\"/>
+                <xsl:apply-templates/>
+                <env name="tablenotes" nl1="1">
+                    <cmd name="small" gr="0" nl1="1"/>
+                    <cmd name="item" gr="0" nl1="1"/>
+                    <xsl:value-of select="caption/p"/>
+                </env>
+            </env>
+        </env>
+    </xsl:template>
+    <xsl:template match="label"/>
+    <xsl:template match="table">
+        <env name="tabular" nl1="1">
+            <parm>
+                <xsl:variable name="counter">
+                    <xsl:value-of select="count(tbody/tr)"/>
+                </xsl:variable>
+                <xsl:for-each select="thead/tr">
+                    <xsl:if test="position()=1">
+                        <xsl:variable name="colNum">
+                            <xsl:value-of select="sum(th/@colspan)"/>
+                        </xsl:variable>
+                        <xsl:call-template name="buildColStr">
+                            <xsl:with-param name="count" select="$colNum"/>
+                        </xsl:call-template>
+                        <spec cat="vert"/>
+                    </xsl:if>
+                </xsl:for-each>
+            </parm>
+            <cmd name="hline" gr="0" nl2="1"/>
+            <xsl:for-each select="thead/tr">
+                <xsl:for-each select="th">
+                    <xsl:choose>
+                        <xsl:when test="./@colspan=1">
+                            <xsl:value-of select="."/>
+                            <xsl:if test="position()!=last()">
+                                <spec cat="align"/>
+                            </xsl:if>
+                        </xsl:when>
+                        <xsl:otherwise>
+                            <cmd name="multicolumn" nl1="1">
+                                <parm>
+                                    <xsl:value-of select="./@colspan"/>
+                                </parm>
+                                <parm>
+                                    <spec cat="vert"/>
+                                    <xsl:text>c</xsl:text>
+                                    <xsl:if test="position()=last()">
+                                        <spec cat="vert"/>
+                                    </xsl:if>
+                                </parm>
+                                <parm>
+                                    <xsl:value-of select="."/>
+                                </parm>
+                            </cmd>
+                        </xsl:otherwise>
+                    </xsl:choose>
+                </xsl:for-each>
+                <ctrl ch="\"/>
+                <cmd name="hline" gr="0" nl2="1"/>
+            </xsl:for-each>
+            <xsl:for-each select="tbody/tr">
+                <xsl:for-each select="td">
+                    <xsl:choose>
+                        <xsl:when test="./@colspan=1">
+                            <xsl:value-of select="."/>
+                            <xsl:if test="position()!=last()">
+                                <spec cat="align"/>
+                            </xsl:if>
+                        </xsl:when>
+                        <xsl:otherwise>
+                            <cmd name="multicolumn" nl1="1">
+                                <parm>
+                                    <xsl:value-of select="./@colspan"/>
+                                </parm>
+                                <parm>
+                                    <spec cat="vert"/>
+                                    <xsl:text>c</xsl:text>
+                                    <xsl:if test="position()=last()">
+                                        <spec cat="vert"/>
+                                    </xsl:if>
+                                </parm>
+                                <parm>
+                                    <xsl:value-of select="."/>
+                                </parm>
+                            </cmd>
+                        </xsl:otherwise>
+                    </xsl:choose>
+                </xsl:for-each>
+                <ctrl ch="\"/>
+                <cmd name="hline" gr="0" nl2="1"/>
+            </xsl:for-each>
+        </env>
+    </xsl:template>
+    <xsl:template match="thead"/>
+    <xsl:template name="buildColStr">
+        <xsl:param name="count" select="@colNum"/>
+        <xsl:if test="$count>0">
+            <spec cat="vert"/>
+            <xsl:text>c</xsl:text>
+            <xsl:call-template name="buildColStr">
+                <xsl:with-param name="count" select="$count - 1"/>
+            </xsl:call-template>
+        </xsl:if>
+    </xsl:template>
+    <xsl:template match="list">
+        <xsl:choose>
+            <xsl:when test="@list-type='simple'">
+                <env name="itemize">
+                    <xsl:for-each select="list-item">
+                        <xsl:if test="p">
+                            <cmd name="item" gr="0" nl1="1"></cmd>
+                            <xsl:value-of select="."/>
+                        </xsl:if>
+                        <xsl:if test="list">
+                            <xsl:apply-templates/>
+                        </xsl:if>
+                    </xsl:for-each>
+                </env>
+            </xsl:when>
+            <xsl:otherwise>
+                <env name="enumerate">
+                    <xsl:for-each select="list-item">
+                        <xsl:if test="p">
+                            <cmd name="item" gr="0" nl1="1"></cmd>
+                            <xsl:value-of select="."/>
+                        </xsl:if>
+                        <xsl:if test="list">
+                            <xsl:apply-templates/>
+                        </xsl:if>
+                    </xsl:for-each>
+                </env>
+            </xsl:otherwise>
+        </xsl:choose>
+        <xsl:apply-templates/>
+    </xsl:template>
+    <xsl:template match="list-item"/>
+    <xsl:template match="disp-quote">
+        <env name="quotation">
+            <xsl:value-of select="."/>
+        </env>
+    </xsl:template>
+    <xsl:template match="fig">
+        <xsl:variable name="figName">
+            <xsl:value-of select="graphic/@xlink:href" xmlns:xlink="http://www.w3.org/1999/xlink"/>
+        </xsl:variable>
+        <env name="figure">
+            <cmd name="caption" nl1="1">
+                <parm>
+                    <xsl:value-of select="caption/title"/>
+                </parm>
+            </cmd>
+            <cmd name="label" nl1="1">
+                <parm>
+                    <xsl:value-of select="@id"/>
+                </parm>
+            </cmd>
+            <cmd name="includegraphics" nl1="1">
+                <opt>
+                    <xsl:text>width=</xsl:text>
+                    <cmd name="linewidth" gr="0"/>
+                </opt>
+                <parm>
+                    <xsl:value-of select="myFunc:getFileName($figName,'/')"/>
+                </parm>
+            </cmd>
+            <cmd name="footnotesize" nl1="1">
+                <parm>
+                    <xsl:value-of select="caption/p"/>
+                </parm>
+            </cmd>
+        </env>
+    </xsl:template>
+    <xsl:function name="myFunc:getFileName">
+        <xsl:param name="str"/>
+        <xsl:param name="char"/>
+        <xsl:value-of select="subsequence(reverse(tokenize($str,$char)),1,1 )"/>
+    </xsl:function>
+    
+    <xsl:template match="ref-list/ref"> 
+        <xsl:text>@</xsl:text>
+        <xsl:choose>
+            <xsl:when test="element-citation/@publication-type='journal'">
+                <xsl:text>ARTICLE</xsl:text>
+            </xsl:when>
+            <xsl:otherwise>
+                <xsl:value-of select="upper-case(element-citation/@publication-type)"/>
+            </xsl:otherwise>
+        </xsl:choose>
+        <xsl:text>{</xsl:text>
+        <xsl:value-of select="@id"/>
+        <xsl:text>,</xsl:text>
+        <xsl:apply-templates/>
+        <xsl:text>}</xsl:text>
+    </xsl:template>
+    <xsl:template match="element-citation/person-group">
+        <xsl:text>AUTHOR = "</xsl:text>
+        <xsl:for-each select="name">
+            <xsl:value-of select="given-names"/>
+            <xsl:text> </xsl:text>
+            <xsl:value-of select="surname"/>
+            <xsl:choose>
+                <xsl:when test="position()=last()"/>
+                <xsl:otherwise><xsl:text> and </xsl:text></xsl:otherwise>
+            </xsl:choose>
+        </xsl:for-each>
+        <xsl:text>",</xsl:text>
+    </xsl:template>
+    <xsl:template match="element-citation/year">
+        <xsl:text>YEAR = "</xsl:text>
+        <xsl:value-of select="."/>
+        <xsl:text>",</xsl:text>
+    </xsl:template>
+    <xsl:template match="element-citation/source">
+        <xsl:choose>
+            <xsl:when test="../@publication-type='journal'">
+                <xsl:text>JOURNAL = "</xsl:text>
+                <xsl:value-of select="."/>
+                <xsl:text>",</xsl:text>
+            </xsl:when>
+            <xsl:otherwise>
+                <xsl:text>TITLE = "</xsl:text>
+                <xsl:value-of select="."/>
+                <xsl:text>",</xsl:text>
+            </xsl:otherwise>
+        </xsl:choose>
+    </xsl:template>
+    <xsl:template match="element-citation/volume">
+        <xsl:text>VOLUME = "</xsl:text>
+        <xsl:value-of select="."/>
+        <xsl:text>",</xsl:text>
+    </xsl:template>
+    <xsl:template match="element-citation/issue">
+        <xsl:text>NUMBER = "</xsl:text>
+        <xsl:value-of select="."/>
+        <xsl:text>",</xsl:text>
+    </xsl:template>
+    <xsl:template match="element-citation/fpage">
+        <xsl:choose>
+            <xsl:when test="../lpage">
+                <xsl:text>PAGES = "</xsl:text>
+                <xsl:value-of select="."/>
+                <xsl:text>--</xsl:text>
+            </xsl:when>
+            <xsl:otherwise>
+                <xsl:text>PAGES = "</xsl:text>
+                <xsl:value-of select="."/>
+                <xsl:text>",</xsl:text>
+            </xsl:otherwise>
+        </xsl:choose>
+    </xsl:template>
+    <xsl:template match="element-citation/lpage">
+        <xsl:choose>
+            <xsl:when test="../fpage">
+                <xsl:value-of select="."/>
+                <xsl:text>",</xsl:text>
+            </xsl:when>
+            <xsl:otherwise>
+                <xsl:text>PAGES = "</xsl:text>
+                <xsl:value-of select="."/>
+                <xsl:text>",</xsl:text>
+            </xsl:otherwise>
+        </xsl:choose>
+    </xsl:template>    
+    <xsl:template match="element-citation/pub-id">
+        <xsl:value-of select="upper-case(./@pub-id-type)"/>
+        <xsl:text> = "</xsl:text>
+        <xsl:value-of select="."/>
+        <xsl:text>",</xsl:text>
+    </xsl:template>
+    <xsl:template match="element-citation/publisher-loc">
+        <xsl:text>ADDRESS = "</xsl:text>
+        <xsl:value-of select="."/>
+        <xsl:text>",</xsl:text>
+    </xsl:template>
+    <xsl:template match="element-citation/ext-link">
+        <xsl:text>URL = "</xsl:text>
+        <xsl:value-of select="."/>
+        <xsl:text>",</xsl:text>
+    </xsl:template>
+    <xsl:template match="element-citation/article-title">
+        <xsl:text>TITLE = "</xsl:text>
+        <xsl:value-of select="."/>
+        <xsl:text>",</xsl:text>
+    </xsl:template>
+    <xsl:template match="element-citation/publisher-name">
+        <xsl:text>PUBLISHER = "</xsl:text>
+        <xsl:value-of select="."/>
+        <xsl:text>",</xsl:text>
+    </xsl:template>
+    
+    <xsl:template match="/">
+        <TeXML>
+            <TeXML escape="0">
+                <xsl:value-of select="$preambule"/>
+            </TeXML>
+            <env name="document">
+                <xsl:apply-templates/>
+                <xsl:copy-of select="$references"/>
+            </env>
+        </TeXML>
+    </xsl:template>
+    <xsl:template match="article/back">
+        <xsl:result-document method="text" href="testArticleTexml.bib">
+            <xsl:value-of select="$bibtexVar"/>
+            <xsl:apply-templates/>
+        </xsl:result-document>
+    </xsl:template>
+</xsl:stylesheet>
